@@ -45,4 +45,4 @@ TEXTS = {
         "done": "Done!"
     },
     "ES": {
-        "title": "
+        "title": "kolors"
