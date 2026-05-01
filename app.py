@@ -1,44 +1,27 @@
-import streamlit as st
-from PIL import Image
-import numpy as np
-from io import BytesIO
-
-st.set_page_config(page_title="Kolors", layout="centered")
-
-st.title("🎨 Kolors")
-
-uploaded_file = st.file_uploader("Envie uma imagem", type=["png", "jpg", "jpeg"])
-
-estilo = st.selectbox("Estilo", ["3D", "Realista", "Anime", "Disney"])
+from PIL import ImageEnhance, ImageFilter, ImageOps
 
 def process_image(img, estilo):
-    arr = np.array(img).astype(np.float32)
 
     if estilo == "3D":
-        arr *= 1.2
+        # contraste forte + sombra
+        img = ImageEnhance.Contrast(img).enhance(2.0)
+        img = img.filter(ImageFilter.DETAIL)
+
     elif estilo == "Realista":
-        arr = arr * 1.1 + 15
+        # suaviza + melhora cores
+        img = img.filter(ImageFilter.SMOOTH)
+        img = ImageEnhance.Color(img).enhance(1.3)
+
     elif estilo == "Anime":
-        arr *= 0.9
+        # bordas + cores chapadas
+        edges = img.filter(ImageFilter.FIND_EDGES)
+        img = ImageOps.posterize(img, 3)
+        img = Image.blend(img, edges, 0.3)
+
     elif estilo == "Disney":
-        arr *= 1.3
+        # cores vibrantes + brilho
+        img = ImageEnhance.Color(img).enhance(1.8)
+        img = ImageEnhance.Brightness(img).enhance(1.2)
+        img = img.filter(ImageFilter.SMOOTH_MORE)
 
-    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
-
-if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image)
-
-    if st.button("Processar"):
-        result = process_image(image, estilo)
-
-        st.image(result)
-
-        buf = BytesIO()
-        result.save(buf, format="PNG")
-
-        st.download_button(
-            "Download",
-            buf.getvalue(),
-            file_name="kolors.png"
-        )
+    return img
