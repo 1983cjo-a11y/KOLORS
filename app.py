@@ -1,31 +1,52 @@
-from PIL import ImageEnhance, ImageFilter, ImageOps
+import streamlit as st
+from PIL import Image
+import numpy as np
+from io import BytesIO
 
+# ===== CONFIG =====
+st.set_page_config(page_title="Kolors", layout="centered")
+
+# ===== TÍTULO =====
+st.title("🎨 Kolors")
+
+# ===== UPLOAD =====
+uploaded_file = st.file_uploader("Envie uma imagem", type=["png", "jpg", "jpeg"])
+
+# ===== ESTILO =====
+estilo = st.selectbox("Estilo", ["3D", "Realista", "Anime", "Disney"])
+
+# ===== PROCESSAMENTO SIMPLES (VERSÃO ESTÁVEL) =====
 def process_image(img, estilo):
-
-    img = img.convert("RGB")
+    arr = np.array(img).astype(np.float32)
 
     if estilo == "3D":
-        # profundidade + contraste forte
-        img = ImageEnhance.Contrast(img).enhance(2.2)
-        img = ImageEnhance.Sharpness(img).enhance(2.0)
-        img = ImageEnhance.Brightness(img).enhance(1.1)
-
+        arr *= 1.2
     elif estilo == "Realista":
-        # suavização + cor equilibrada
-        img = img.filter(ImageFilter.SMOOTH_MORE)
-        img = ImageEnhance.Color(img).enhance(1.4)
-        img = ImageEnhance.Contrast(img).enhance(1.3)
-
+        arr = arr * 1.1 + 10
     elif estilo == "Anime":
-        # efeito desenho forte
-        img = ImageOps.posterize(img, 3)  # reduz cores
-        img = ImageEnhance.Color(img).enhance(2.0)
-        img = img.filter(ImageFilter.SHARPEN)
-
+        arr *= 0.9
     elif estilo == "Disney":
-        # super vibrante + suave
-        img = ImageEnhance.Color(img).enhance(2.5)
-        img = ImageEnhance.Brightness(img).enhance(1.3)
-        img = img.filter(ImageFilter.SMOOTH_MORE)
+        arr *= 1.3
 
-    return img
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+
+# ===== EXECUÇÃO =====
+if uploaded_file:
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Original")
+
+    if st.button("Processar"):
+        result = process_image(image, estilo)
+
+        st.image(result, caption="Resultado")
+
+        # download
+        buf = BytesIO()
+        result.save(buf, format="PNG")
+
+        st.download_button(
+            "Download",
+            buf.getvalue(),
+            file_name="kolors.png",
+            mime="image/png"
+        )
