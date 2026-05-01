@@ -2,26 +2,30 @@ from PIL import ImageEnhance, ImageFilter, ImageOps
 
 def process_image(img, estilo):
 
+    img = img.convert("RGB")
+
     if estilo == "3D":
-        # contraste forte + sombra
-        img = ImageEnhance.Contrast(img).enhance(2.0)
-        img = img.filter(ImageFilter.DETAIL)
+        # profundidade + contraste forte
+        img = ImageEnhance.Contrast(img).enhance(2.2)
+        img = ImageEnhance.Sharpness(img).enhance(2.0)
+        img = ImageEnhance.Brightness(img).enhance(1.1)
 
     elif estilo == "Realista":
-        # suaviza + melhora cores
-        img = img.filter(ImageFilter.SMOOTH)
-        img = ImageEnhance.Color(img).enhance(1.3)
+        # suavização + cor equilibrada
+        img = img.filter(ImageFilter.SMOOTH_MORE)
+        img = ImageEnhance.Color(img).enhance(1.4)
+        img = ImageEnhance.Contrast(img).enhance(1.3)
 
     elif estilo == "Anime":
-        # bordas + cores chapadas
-        edges = img.filter(ImageFilter.FIND_EDGES)
-        img = ImageOps.posterize(img, 3)
-        img = Image.blend(img, edges, 0.3)
+        # efeito desenho forte
+        img = ImageOps.posterize(img, 3)  # reduz cores
+        img = ImageEnhance.Color(img).enhance(2.0)
+        img = img.filter(ImageFilter.SHARPEN)
 
     elif estilo == "Disney":
-        # cores vibrantes + brilho
-        img = ImageEnhance.Color(img).enhance(1.8)
-        img = ImageEnhance.Brightness(img).enhance(1.2)
+        # super vibrante + suave
+        img = ImageEnhance.Color(img).enhance(2.5)
+        img = ImageEnhance.Brightness(img).enhance(1.3)
         img = img.filter(ImageFilter.SMOOTH_MORE)
 
     return img
