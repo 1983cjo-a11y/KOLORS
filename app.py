@@ -8,50 +8,50 @@ st.set_page_config(page_title="Kolors - Refinar Traços", layout="centered")
 
 st.title("🖊️ Kolors - Refinar Traços de HQ")
 
-uploaded_file = st.file_uploader("Envie uma imagem", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("Envie uma imagem (HQ, mangá, doujin)", type=["png", "jpg", "jpeg"])
 
-# ===== REFINAR TRAÇOS =====
+# ===== REFINAR TRAÇOS (VERSÃO MELHORADA) =====
 def refinar_tracos(img):
 
-    img_np = np.array(img.convert("L"))
+    img_np = np.array(img.convert("RGB"))
 
-    # reduzir ruído
-    blur = cv2.GaussianBlur(img_np, (3, 3), 0)
+    # suavizar sem perder bordas
+    smooth = cv2.bilateralFilter(img_np, d=9, sigmaColor=75, sigmaSpace=75)
 
-    # detectar bordas
-    edges = cv2.Canny(blur, 50, 150)
+    # aumentar nitidez (sharpen)
+    kernel = np.array([
+        [0, -1, 0],
+        [-1, 5,-1],
+        [0, -1, 0]
+    ])
 
-    # engrossar linhas
-    kernel = np.ones((2,2), np.uint8)
-    edges = cv2.dilate(edges, kernel, iterations=1)
+    sharpen = cv2.filter2D(smooth, -1, kernel)
 
-    # inverter (preto no branco)
-    edges = cv2.bitwise_not(edges)
-
-    return edges
+    return sharpen
 
 # ===== EXECUÇÃO =====
 if uploaded_file:
 
     image = Image.open(uploaded_file)
-    st.image(image, caption="Original")
+    st.image(image, caption="Imagem Original", use_column_width=True)
 
     if st.button("Refinar traços"):
 
-        with st.spinner("Processando..."):
+        with st.spinner("Melhorando os traços..."):
 
             refinado = refinar_tracos(image)
 
-            # converter para RGB para exibir corretamente
-            final = Image.fromarray(cv2.cvtColor(refinado, cv2.COLOR_GRAY2RGB))
+            final = Image.fromarray(refinado)
 
-            st.image(final, caption="Resultado")
+            st.image(final, caption="Resultado Refinado", use_column_width=True)
 
+            # download
             buf = BytesIO()
             final.save(buf, format="PNG")
 
             st.download_button(
-                "Baixar imagem",
+                "Baixar imagem refinada",
                 buf.getvalue(),
-                file_name="refinado.png"
+                file_name="kolors_refinado.png",
+                mime="image/png"
             )
